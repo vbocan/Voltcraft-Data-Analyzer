@@ -24,14 +24,14 @@ def Process(filename):
     Input:       File name.
     Output:      Dictionary containing values for:
                  "TotalPowerConsumed" - kWh
-                 "TotalRecordedTime" - decimal hours
-                 "TotalOnTime" - decimal hours
-                 "Consumption" - tuple containing 10 values (1st meaning today, last meaning nine days ago)
-                 "RecordedTime" - - tuple containing 10 values (1st meaning today, last meaning nine days ago)
-                 "TotalTime" - tuple containing 10 values (1st meaning today, last meaning nine days ago)
+                 "TotalRecordedTime" - decimal minutes
+                 "TotalOnTime" - decimal minutes
+                 "ConsumptionHistory" - consumption history - tuple containing 10 values (1st meaning today, last meaning nine days ago)
+                 "RecordedTimeHistory" - recorded time history - tuple containing 10 values (1st meaning today, last meaning nine days ago)
+                 "OnTimeHistory" - total time history - tuple containing 10 values (1st meaning today, last meaning nine days ago)
                  "UnitNumber" - device profile number (Voltcraft Energy-Logger 4000 has several profiles with separate statistics)
-                 "Tarrif1"
-                 "Tarrif2"
+                 "Tariff1"
+                 "Tariff2"
                  "InitialDateTime" - date and time when when the device was initially set
     """
     try:
@@ -51,8 +51,8 @@ def Process(filename):
         return VoltcraftInfo
 
     VoltcraftInfo["TotalPowerConsumed"] = DecodeHex(x[1:4]) / 1000  # kWh
-    VoltcraftInfo["TotalRecordedTime"] = DecodeHex(x[4:7]) / 100    # Hours in decimal format
-    VoltcraftInfo["TotalOnTime"] = DecodeHex(x[7:10]) / 100         # Hours in decimal format
+    VoltcraftInfo["TotalRecordedTime"] = DecodeHex(x[4:7]) / 100    # Minutes in decimal format    
+    VoltcraftInfo["TotalOnTime"] = DecodeHex(x[7:10]) / 100         # Minutes in decimal format
     
     ConsumptionToday = DecodeHex(x[10:13]) / 1000      # kWh
     ConsumptionYesterday = DecodeHex(x[13:16]) / 1000  # kWh
@@ -64,9 +64,9 @@ def Process(filename):
     Consumption7DaysAgo = DecodeHex(x[31:34]) / 1000   # kWh
     Consumption8DaysAgo = DecodeHex(x[34:37]) / 1000   # kWh
     Consumption9DaysAgo = DecodeHex(x[37:40]) / 1000   # kWh
-    VoltcraftInfo["Consumption"] = (ConsumptionToday, ConsumptionYesterday, Consumption2DaysAgo, Consumption3DaysAgo, Consumption4DaysAgo, Consumption5DaysAgo, Consumption6DaysAgo, Consumption7DaysAgo, Consumption8DaysAgo, Consumption9DaysAgo)
+    VoltcraftInfo["ConsumptionHistory"] = (ConsumptionToday, ConsumptionYesterday, Consumption2DaysAgo, Consumption3DaysAgo, Consumption4DaysAgo, Consumption5DaysAgo, Consumption6DaysAgo, Consumption7DaysAgo, Consumption8DaysAgo, Consumption9DaysAgo)
 
-    RecordedTimeToday = DecodeHex(x[40:42]) / 100     # Hours in decimal format
+    RecordedTimeToday = DecodeHex(x[40:42]) / 100     # Hours in decimal format    
     RecordedTimeYesterday = DecodeHex(x[42:44]) / 100 # Hours in decimal format
     RecordedTime2DaysAgo = DecodeHex(x[44:46]) / 100  # Hours in decimal format
     RecordedTime3DaysAgo = DecodeHex(x[46:48]) / 100  # Hours in decimal format
@@ -76,7 +76,7 @@ def Process(filename):
     RecordedTime7DaysAgo = DecodeHex(x[54:56]) / 100  # Hours in decimal format
     RecordedTime8DaysAgo = DecodeHex(x[56:58]) / 100  # Hours in decimal format
     RecordedTime9DaysAgo = DecodeHex(x[58:60]) / 100  # Hours in decimal format
-    VoltcraftInfo["RecordedTime"] = (RecordedTimeToday, RecordedTimeYesterday, RecordedTime2DaysAgo, RecordedTime3DaysAgo, RecordedTime4DaysAgo, RecordedTime5DaysAgo, RecordedTime6DaysAgo, RecordedTime7DaysAgo, RecordedTime8DaysAgo, RecordedTime9DaysAgo)
+    VoltcraftInfo["RecordedTimeHistory"] = (RecordedTimeToday, RecordedTimeYesterday, RecordedTime2DaysAgo, RecordedTime3DaysAgo, RecordedTime4DaysAgo, RecordedTime5DaysAgo, RecordedTime6DaysAgo, RecordedTime7DaysAgo, RecordedTime8DaysAgo, RecordedTime9DaysAgo)
 
     TotalTimeToday = DecodeHex(x[60:62]) / 100        # Hours in decimal format
     TotalTimeYesterday = DecodeHex(x[62:64]) / 100    # Hours in decimal format
@@ -88,7 +88,7 @@ def Process(filename):
     TotalTime7DaysAgo = DecodeHex(x[74:76]) / 100     # Hours in decimal format
     TotalTime8DaysAgo = DecodeHex(x[76:78]) / 100     # Hours in decimal format
     TotalTime9DaysAgo = DecodeHex(x[78:80]) / 100     # Hours in decimal format
-    VoltcraftInfo["TotalTime"] = (TotalTimeToday, TotalTimeYesterday, TotalTime2DaysAgo, TotalTime3DaysAgo, TotalTime4DaysAgo, TotalTime5DaysAgo, TotalTime6DaysAgo, TotalTime7DaysAgo, TotalTime8DaysAgo, TotalTime9DaysAgo)
+    VoltcraftInfo["OnTimeHistory"] = (TotalTimeToday, TotalTimeYesterday, TotalTime2DaysAgo, TotalTime3DaysAgo, TotalTime4DaysAgo, TotalTime5DaysAgo, TotalTime6DaysAgo, TotalTime7DaysAgo, TotalTime8DaysAgo, TotalTime9DaysAgo)
 
     VoltcraftInfo["UnitNumber"] = DecodeHex(x[80:81])
 

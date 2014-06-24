@@ -21,7 +21,7 @@ def Process(filename):
     """
     Description: Process a Voltcraft data file. Data files contain minute-by-minute history of voltage, current and power factor.
     Input:       File name.
-    Output:      Dictionary containing values for "Timestamp", "Voltage", "Current", "PowerFactor" (via generator function)
+    Output:      Dictionary containing values for "Timestamp", "Voltage", "Current", "PowerFactor", "Power" (via generator function)
     """
     try:
         with open(filename, "rb") as fin:
@@ -43,7 +43,7 @@ def Process(filename):
             Year = DecodeHex(x[i+2:i+3]) + 2000
             Hour = DecodeHex(x[i+3:i+4])
             Minute = DecodeHex(x[i+4:i+5])
-            StartTime = datetime(Year, Month, Day, Hour, Minute)
+            StartTime = datetime(Year, Month, Day, Hour, Minute, 0, 0)
             MinuteOffset = 0
             i += 5 # Advance date and time
             continue
@@ -57,7 +57,8 @@ def Process(filename):
         Current = DecodeHex(x[i+2:i+4]) / 1000 # Amperes
         PowerFactor = DecodeHex(x[i+4:i+5]) / 100 # CosPHI
         TimeStamp = StartTime + timedelta(minutes = MinuteOffset)
-        yield { "Timestamp":TimeStamp, "Voltage":Voltage, "Current":Current, "PowerFactor":PowerFactor }
+        Power = Voltage * Current * PowerFactor / 1000 # kW
+        yield { "Timestamp":TimeStamp, "Voltage":Voltage, "Current":Current, "PowerFactor":PowerFactor, "Power":Power}
         MinuteOffset += 1
         i += 5
     

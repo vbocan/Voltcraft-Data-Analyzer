@@ -14,25 +14,41 @@ Reference:    Voltcraft File Format: http://www2.produktinfo.conrad.com/datenbla
 """
 
 from sys import argv
+from os import listdir, getcwd
+from os.path import isfile, join, getsize
+from datetime import timedelta
+from datetime import datetime
+from DataExport import WriteInfoData, WriteHistoricData
 import VoltcraftInformationFile
 import VoltcraftDataFile
 
-if __name__ == "__main__":
-    if len(argv) == 1:
-        print("Voltcraft Data Analyzer")
-        print("Valer Bocan, PhD <valer@bocan.ro>")
-        print()
-        print("Specify a Voltcraft file as an argument.")
-    else:
-        for filename in argv[1:]:
-            # Attempt to process information file
-            info = VoltcraftInformationFile.Process(filename)
-            if info:
-                print("Voltcraft information file successfully processed.")
-                for key in info:
-                    print("{0}:{1}".format(key, info[key]))
-            else:
-                info = VoltcraftDataFile.Process(filename)
-                print("Voltcraft data file successfully processed.")
-                for key in info:
-                    print(key)
+VoltcraftData = []
+
+if __name__ == "__main__":    
+    print("Voltcraft Data Analyzer v1.0 (June 24th, 2014)")
+    print("Valer Bocan, PhD <valer@bocan.ro>")
+    TargetFolder = getcwd()
+    if len(argv) > 1:
+        TargetFolder = argv[1:]
+    print("Processing Voltcraft files from folder {0}:".format(TargetFolder))
+
+    # Get all files in the target folder
+    TargetFiles = [ f for f in listdir(TargetFolder) if f.upper().endswith("BIN")]
+    
+    for filename in TargetFiles:
+        print("Processing file {0}.".format(filename))
+        # Check file size (if it's 102, we have an information file, else it's a data file)
+        isInfoFile = (getsize(filename) == 102);
+
+        if isInfoFile:
+            VoltcraftInfo = VoltcraftInformationFile.Process(filename)            
+        else:
+            data = list(VoltcraftDataFile.Process(filename))            
+            VoltcraftData += data
+    # Order historic data
+    print("Saving general power information to info.txt.")
+    SortedData = sorted(VoltcraftData, key=lambda x: x["Timestamp"], reverse=False)
+    WriteInfoData("info.txt", VoltcraftInfo, SortedData)
+    print("Saving raw power history ({0} items) to history.csv.".format(len(SortedData)))
+    WriteHistoricData("history.csv", SortedData)
+    print("Done.")

@@ -24,5 +24,5 @@ def DecodeDecimal(hexinput):
     """
     Converts to decimal each byte in the input tuple, concatenates the result and converts
     the resulting string into decimal.    
-    """
-    return int(''.join('{:02d}'.format(x) for x in hexinput), 10)
+    """    
+    return int(''.join('{0}'.format(x) for x in hexinput), 10)
