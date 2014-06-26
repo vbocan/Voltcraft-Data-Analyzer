@@ -1,7 +1,7 @@
 """
 Project:      Voltcraft Data Analyzer
 Author:       Valer Bocan, PhD <valer@bocan.ro>
-Last updated: June 25rd, 2014
+Last updated: June 26th, 2014
 
 Module
 description:  The VoltcraftDataFile module processes data files containing history of voltage, current and power factor,
@@ -16,13 +16,13 @@ import csv
 from datetime import timedelta
 from datetime import datetime
 
-def WriteInfoData(filename, info, data):
+def WriteInfoData(filename, info, powerdata, blackoutdata):
     """
     Write informational data to a text file
     """
     try:
         with open(filename, "wt") as fout:
-            fout.write("Voltcraft Data Analyzer v1.0 (June 25th, 2014)\n")
+            fout.write("Voltcraft Data Analyzer v1.0 (June 26th, 2014)\n")
             fout.write("Valer Bocan, PhD <valer@bocan.ro>\n")
             fout.write("\n")
             fout.write("Initial time on device: {0}\n".format(info["InitialDateTime"]))
@@ -71,18 +71,21 @@ def WriteInfoData(filename, info, data):
             fout.write("Tariff 2: {0}\n".format(info["Tariff2"]))
             fout.write("\n")
             fout.write("Parameter history:\n")
-            for d in data:
-                if d["Status"] == "Live":
-                    fout.write("[{0}] U={1:02}V I={2:.2f}A cosPHI={3:.2f} P={4:.3f}kW\n".format(d["Timestamp"].strftime("%Y-%m-%d %H:%M"), d["Voltage"], d["Current"], d["PowerFactor"], d["Power"]))
-                else:
-                    fout.write("[{0}] Blackout for the next {1}!\n".format(d["Timestamp"].strftime("%Y-%m-%d %H:%M"), GetDurationString(d["Duration"])))
-            stats = GetDataStatistics(data)
+            for d in powerdata:                
+                fout.write("[{0}] U={1:02}V I={2:.2f}A cosPHI={3:.2f} P={4:.3f}kW\n".format(d["Timestamp"].strftime("%Y-%m-%d %H:%M"), d["Voltage"], d["Current"], d["PowerFactor"], d["Power"]))                
+                
+            stats1 = GetDataStatistics(powerdata)
             fout.write("\n")
             fout.write("Statistics:\n")            
-            fout.write("Minimum voltage: {0}V\n".format(stats["MinVoltage"]))
-            fout.write("Maximum voltage: {0}V\n".format(stats["MaxVoltage"]))
-            fout.write("Maximum power: {0:.3f}kW\n".format(stats["MaxPower"]))
-            fout.write("Blackouts: {0} for a total of {1}\n".format(stats["BlackoutCount"], GetDurationString(stats["BlackoutDuration"])))
+            fout.write("Minimum voltage: {0}V\n".format(stats1["MinVoltage"]))
+            fout.write("Maximum voltage: {0}V\n".format(stats1["MaxVoltage"]))
+            fout.write("Maximum power: {0:.3f}kW\n".format(stats1["MaxPower"]))
+            
+            stats2 = GetBlackoutStatistics(blackoutdata)            
+            fout.write("\n")                                    
+            fout.write("Blackouts: {0} for a total of {1}\n".format(stats2["Count"], GetDurationString(stats2["TotalDuration"])))
+            for b in blackoutdata:
+                fout.write("[{0}] Blackout for {1}\n".format(b["Timestamp"].strftime("%Y-%m-%d %H:%M"), GetDurationString(b["Duration"])))
             fout.write("\n")
             fout.write("File generated on: {0}\n".format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
 
@@ -97,9 +100,8 @@ def WriteHistoricData(filename, data):
         wr = csv.writer(fp, delimiter=';')
         header = [['Timestamp', 'Voltage (V)', 'Current (A)', 'Power (kW)']]
         wr.writerows(header)  # Write header
-        for d in data:
-            if d["Status"] == 'Live':
-                str = [[d["Timestamp"], d["Voltage"], d["Current"], d["Power"]]]
+        for d in data:            
+            str = [[d["Timestamp"], d["Voltage"], d["Current"], d["Power"]]]
             wr.writerows(str)
 
 def GetDurationString(duration):
@@ -121,9 +123,12 @@ def GetDurationStringFromHours(duration):
     return GetDurationString(timedelta(hours=duration))
 
 def GetDataStatistics(data):
-    MinVoltage = min(item['Voltage'] for item in data if item['Status'] == 'Live')
-    MaxVoltage = max(item['Voltage'] for item in data if item['Status'] == 'Live')
-    MaxPower = max(item['Power'] for item in data if item['Status'] == 'Live')
-    BlackoutCount = len([item for item in data if item['Status'] == 'Blackout'])
-    BlackoutDurations = [item['Duration'] for item in data if item['Status'] == 'Blackout']    
-    return {"MinVoltage":MinVoltage, "MaxVoltage":MaxVoltage, "MaxPower":MaxPower, "BlackoutCount":BlackoutCount, "BlackoutDuration":sum(BlackoutDurations, timedelta())}
+    MinVoltage = min(item['Voltage'] for item in data)
+    MaxVoltage = max(item['Voltage'] for item in data)
+    MaxPower = max(item['Power'] for item in data)        
+    return {"MinVoltage":MinVoltage, "MaxVoltage":MaxVoltage, "MaxPower":MaxPower}
+
+def GetBlackoutStatistics(data):
+    Count = len(data)
+    TotalDuration = sum((item['Duration'] for item in data), timedelta())
+    return {"Count":Count, "TotalDuration":TotalDuration}

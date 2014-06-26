@@ -1,7 +1,7 @@
 """
 Project:      Voltcraft Data Analyzer
 Author:       Valer Bocan, PhD <valer@bocan.ro>
-Last updated: June 25rd, 2014
+Last updated: June 26th, 2014
 
 Module
 description:  The VoltcraftDataFile module processes data files containing history of voltage, current and power factor,
@@ -21,11 +21,11 @@ from DataExport import WriteInfoData, WriteHistoricData
 import VoltcraftInformationFile
 import VoltcraftDataFile
 
-VoltcraftData = []
+PowerData = []
 ErrorOccured = False
 
 if __name__ == "__main__":    
-    print("Voltcraft Data Analyzer v1.0 (June 25th, 2014)")
+    print("Voltcraft Data Analyzer v1.0 (June 26th, 2014)")
     print("Valer Bocan, PhD <valer@bocan.ro>")
     TargetFolder = getcwd()
     if len(argv) > 1:
@@ -41,19 +41,22 @@ if __name__ == "__main__":
             # Check file size (if it's 102, we have an information file, else it's a data file)
             isInfoFile = (getsize(filename) == 102);
             if isInfoFile:
-                VoltcraftInfo = VoltcraftInformationFile.Process(filename)            
+                PowerInfo = VoltcraftInformationFile.Process(filename)            
             else:
                 data = list(VoltcraftDataFile.Process(filename))            
-                VoltcraftData += data
+                PowerData += data
         except Exception as e:
             print("Error processing current file: {0}.".format(e))
             ErrorOccured = True
             break
             
     if not ErrorOccured:
+        # Save general power information and parameter history
         print("Saving general power information to info.txt.")
-        SortedData = sorted(VoltcraftData, key=lambda x: x["Timestamp"], reverse=False)
-        WriteInfoData("info.txt", VoltcraftInfo, SortedData)
-        print("Saving raw power history ({0} items) to history.csv.".format(len(SortedData)))
-        WriteHistoricData("history.csv", SortedData)
+        SortedPowerData = sorted(PowerData, key=lambda x: x["Timestamp"], reverse=False)
+        BlackoutData = list(VoltcraftDataFile.DetectBlackouts(SortedPowerData))
+        WriteInfoData("info.txt", PowerInfo, SortedPowerData, BlackoutData)
+        #Save raw power history        
+        print("Saving raw power history ({0} items) to history.csv.".format(len(SortedPowerData)))
+        WriteHistoricData("history.csv", SortedPowerData)
         print("Done.")
