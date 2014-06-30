@@ -1,7 +1,7 @@
 """
 Project:      Voltcraft Data Analyzer
 Author:       Valer Bocan, PhD <valer@bocan.ro>
-Last updated: June 26th, 2014
+Last updated: June 30th, 2014
 
 Module
 description:  The VoltcraftDataFile module processes data files containing history of voltage, current and power factor,
@@ -25,7 +25,7 @@ PowerData = []
 ErrorOccured = False
 
 if __name__ == "__main__":    
-    print("Voltcraft Data Analyzer v1.0 (June 26th, 2014)")
+    print("Voltcraft Data Analyzer v1.0 (June 30th, 2014)")
     print("Valer Bocan, PhD <valer@bocan.ro>")
     TargetFolder = getcwd()
     if len(argv) > 1:
@@ -60,3 +60,6 @@ if __name__ == "__main__":
         print("Saving raw power history ({0} items) to history.csv.".format(len(SortedPowerData)))
         WriteHistoricData("history.csv", SortedPowerData)
         print("Done.")
+
+    #Wait for key press
+    input('Press Enter to exit')

@@ -61,7 +61,7 @@ def Process(filename):
         Power = Voltage * Current * PowerFactor / 1000 # kW
         MinuteOffset += 1
         i += 5        
-        res = {"Timestamp":TimeStamp, "Voltage":Voltage, "Current":Current, "PowerFactor":PowerFactor, "Power":round(Power,3)}        
+        res = {"Timestamp":TimeStamp, "Voltage":Voltage, "Current":Current, "PowerFactor":PowerFactor, "Power":Power}
         yield res
 
 def DetectBlackouts(VoltcraftData):
@@ -69,7 +69,7 @@ def DetectBlackouts(VoltcraftData):
     for x,y in pw:
         diff = y["Timestamp"] - x["Timestamp"]
         if  diff > timedelta(minutes = 1):
-            res = {"Timestamp":x["Timestamp"], "Duration": diff}            
+            res = {"Timestamp":x["Timestamp"], "Duration": diff}
             yield res
 
 def pairwise(iterable):
