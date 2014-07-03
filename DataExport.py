@@ -1,7 +1,7 @@
 """
 Project:      Voltcraft Data Analyzer
 Author:       Valer Bocan, PhD <valer@bocan.ro>
-Last updated: June 30th, 2014
+Last updated: July 3rd, 2014
 
 Module
 description:  The VoltcraftDataFile module processes data files containing history of voltage, current and power factor,
@@ -22,7 +22,7 @@ def WriteInfoData(filename, info, powerdata, blackoutdata):
     """
     try:
         with open(filename, "wt") as fout:
-            fout.write("Voltcraft Data Analyzer v1.0 (June 30th, 2014)\n")
+            fout.write("Voltcraft Data Analyzer v1.01 (July 3rd, 2014)\n")
             fout.write("Valer Bocan, PhD <valer@bocan.ro>\n")
             fout.write("\n")
             fout.write("Initial time on device: {0}\n".format(info["InitialDateTime"]))
@@ -78,9 +78,10 @@ def WriteInfoData(filename, info, powerdata, blackoutdata):
             stats1 = GetDataStatistics(powerdata)
             fout.write("\n")
             fout.write("--- VOLTAGE AND POWER\n")
-            fout.write("Minimum voltage : {0}V ({1} occurences, first on {2})\n".format(stats1["MinVoltage"], len(stats1["MinVoltageTimestamps"]), stats1["MinVoltageTimestamps"][0].strftime("%Y-%m-%d %H:%M")))
-            fout.write("Maximum voltage : {0}V ({1} occurences, first on {2})\n".format(stats1["MaxVoltage"], len(stats1["MaxVoltageTimestamps"]), stats1["MaxVoltageTimestamps"][0].strftime("%Y-%m-%d %H:%M")))
-            fout.write("Maximum power   : {0:.3f}kW ({1} occurences, first on {2})\n".format(stats1["MaxPower"], len(stats1["MaxPowerTimestamps"]), stats1["MaxPowerTimestamps"][0].strftime("%Y-%m-%d %H:%M")))            
+            fout.write("Minimum voltage: {0:.1f}V ({1} occurences, first on {2})\n".format(stats1["MinVoltage"], len(stats1["MinVoltageTimestamps"]), stats1["MinVoltageTimestamps"][0].strftime("%Y-%m-%d %H:%M")))
+            fout.write("Maximum voltage: {0:.1f}V ({1} occurences, first on {2})\n".format(stats1["MaxVoltage"], len(stats1["MaxVoltageTimestamps"]), stats1["MaxVoltageTimestamps"][0].strftime("%Y-%m-%d %H:%M")))
+            fout.write("Average voltage: {0:.1f}V\n".format(stats1["AvgVoltage"]))
+            fout.write("Maximum power  : {0:.3f}kW ({1} occurences, first on {2})\n".format(stats1["MaxPower"], len(stats1["MaxPowerTimestamps"]), stats1["MaxPowerTimestamps"][0].strftime("%Y-%m-%d %H:%M")))            
             
             stats2 = GetBlackoutStatistics(blackoutdata)            
             fout.write("\n")
@@ -138,11 +139,13 @@ def GetDataStatistics(data):
     MinVoltageTimestamps = tuple(item['Timestamp'] for item in data if item["Voltage"] == MinVoltage)    
     # Compute maximum voltage and its occurence times
     MaxVoltage = max(item['Voltage'] for item in data)
-    MaxVoltageTimestamps = tuple(item['Timestamp'] for item in data if item["Voltage"] == MaxVoltage)    
+    MaxVoltageTimestamps = tuple(item['Timestamp'] for item in data if item["Voltage"] == MaxVoltage)
+    # Compute average voltage
+    AvgVoltage = sum(item['Voltage'] for item in data) / len(data)
     # Compute maximum power and its occurence times
     MaxPower = max(item['Power'] for item in data)
     MaxPowerTimestamps = tuple(item['Timestamp'] for item in data if item["Power"] == MaxPower)    
-    return {"MinVoltage":MinVoltage, "MinVoltageTimestamps":MinVoltageTimestamps, "MaxVoltage":MaxVoltage, "MaxVoltageTimestamps":MaxVoltageTimestamps, "MaxPower":MaxPower, "MaxPowerTimestamps":MaxPowerTimestamps}
+    return {"AvgVoltage": AvgVoltage, "MinVoltage":MinVoltage, "MinVoltageTimestamps":MinVoltageTimestamps, "MaxVoltage":MaxVoltage, "MaxVoltageTimestamps":MaxVoltageTimestamps, "MaxPower":MaxPower, "MaxPowerTimestamps":MaxPowerTimestamps}
 
 def GetBlackoutStatistics(data):
     Count = len(data)
