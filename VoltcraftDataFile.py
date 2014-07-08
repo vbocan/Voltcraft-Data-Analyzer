@@ -1,7 +1,7 @@
 """
 Project:      Voltcraft Data Analyzer
 Author:       Valer Bocan, PhD <valer@bocan.ro>
-Last updated: June 26th, 2014
+Last updated: July 8th, 2014
 
 Module
 description:  The VoltcraftDataFile module processes data files containing history of voltage, current and power factor,
@@ -59,9 +59,10 @@ def Process(filename):
         PowerFactor = DecodeHex(x[i+4:i+5]) / 100 # CosPHI
         TimeStamp = StartTime + timedelta(minutes = MinuteOffset)
         Power = Voltage * Current * PowerFactor / 1000 # kW
+        ApparentPower = Voltage * Current / 1000 # kVA
         MinuteOffset += 1
         i += 5        
-        res = {"Timestamp":TimeStamp, "Voltage":Voltage, "Current":Current, "PowerFactor":PowerFactor, "Power":Power}
+        res = {"Timestamp":TimeStamp, "Voltage":Voltage, "Current":Current, "PowerFactor":PowerFactor, "Power":Power, "ApparentPower":ApparentPower}
         yield res
 
 def DetectBlackouts(VoltcraftData):

@@ -1,7 +1,7 @@
 """
 Project:      Voltcraft Data Analyzer
 Author:       Valer Bocan, PhD <valer@bocan.ro>
-Last updated: June 30th, 2014
+Last updated: July 8th, 2014
 
 Module
 description:  The VoltcraftDataFile module processes data files containing history of voltage, current and power factor,
@@ -22,7 +22,7 @@ def WriteInfoData(filename, info, powerdata, blackoutdata):
     """
     try:
         with open(filename, "wt") as fout:
-            fout.write("Voltcraft Data Analyzer v1.0 (June 30th, 2014)\n")
+            fout.write("Voltcraft Data Analyzer v1.1 (July 8th, 2014)\n")
             fout.write("Valer Bocan, PhD <valer@bocan.ro>\n")
             fout.write("\n")
             fout.write("Initial time on device: {0}\n".format(info["InitialDateTime"]))
@@ -73,14 +73,16 @@ def WriteInfoData(filename, info, powerdata, blackoutdata):
             fout.write("\n")
             fout.write("--- PARAMETER HISTORY\n")
             for d in powerdata:                
-                fout.write("[{0}] U={1:02}V I={2:.2f}A cosPHI={3:.2f} P={4:.3f}kW\n".format(d["Timestamp"].strftime("%Y-%m-%d %H:%M"), d["Voltage"], d["Current"], d["PowerFactor"], d["Power"]))                
+                fout.write("[{0}] U={1:02}V I={2:.3f}A cosPHI={3:.2f} P={4:.3f}kW S={4:.3f}kVA\n".format(d["Timestamp"].strftime("%Y-%m-%d %H:%M"), d["Voltage"], d["Current"], d["PowerFactor"], d["Power"], d["ApparentPower"]))
                 
             stats1 = GetDataStatistics(powerdata)
             fout.write("\n")
             fout.write("--- VOLTAGE AND POWER\n")
-            fout.write("Minimum voltage : {0}V ({1} occurences, first on {2})\n".format(stats1["MinVoltage"], len(stats1["MinVoltageTimestamps"]), stats1["MinVoltageTimestamps"][0].strftime("%Y-%m-%d %H:%M")))
-            fout.write("Maximum voltage : {0}V ({1} occurences, first on {2})\n".format(stats1["MaxVoltage"], len(stats1["MaxVoltageTimestamps"]), stats1["MaxVoltageTimestamps"][0].strftime("%Y-%m-%d %H:%M")))
-            fout.write("Maximum power   : {0:.3f}kW ({1} occurences, first on {2})\n".format(stats1["MaxPower"], len(stats1["MaxPowerTimestamps"]), stats1["MaxPowerTimestamps"][0].strftime("%Y-%m-%d %H:%M")))            
+            fout.write("Minimum voltage        : {0:.1f}V ({1} occurences, first on {2})\n".format(stats1["MinVoltage"], len(stats1["MinVoltageTimestamps"]), stats1["MinVoltageTimestamps"][0].strftime("%Y-%m-%d %H:%M")))
+            fout.write("Maximum voltage        : {0:.1f}V ({1} occurences, first on {2})\n".format(stats1["MaxVoltage"], len(stats1["MaxVoltageTimestamps"]), stats1["MaxVoltageTimestamps"][0].strftime("%Y-%m-%d %H:%M")))
+            fout.write("Average voltage        : {0:.1f}V\n".format(stats1["AvgVoltage"]))
+            fout.write("Maximum power          : {0:.3f}kW ({1} occurences, first on {2})\n".format(stats1["MaxPower"], len(stats1["MaxPowerTimestamps"]), stats1["MaxPowerTimestamps"][0].strftime("%Y-%m-%d %H:%M")))
+            fout.write("Maximum apparent power : {0:.3f}kVA ({1} occurences, first on {2})\n".format(stats1["MaxApparentPower"], len(stats1["MaxApparentPowerTimestamps"]), stats1["MaxApparentPowerTimestamps"][0].strftime("%Y-%m-%d %H:%M")))
             
             stats2 = GetBlackoutStatistics(blackoutdata)            
             fout.write("\n")
@@ -93,9 +95,11 @@ def WriteInfoData(filename, info, powerdata, blackoutdata):
             stats3 = list(GetPowerStatistics(powerdata))            
             fout.write("--- POWER CONSUMPTION\n")
             for c in stats3:
-                fout.write("[{0}] - {1:.3f} kWh\n".format(c["Day"].strftime("%Y-%m-%d"), c["Consumption"]))
+                fout.write("[{0}] - {1:.3f}kWh\n".format(c["Day"].strftime("%Y-%m-%d"), c["Consumption"]))
+                fout.write("      Recorded: {0}\n".format(GetDurationStringFromMinutes(c["TotalMinutes"])))
+                fout.write("      Power on: {0} ({1:.1f}%)\n".format(GetDurationStringFromMinutes(c["TotalMinutesWithPowerConsumption"]), c["TotalMinutesWithPowerConsumption"] / c["TotalMinutes"] * 100))
             TotalPowerConsumption = sum(item['Consumption'] for item in stats3)            
-            fout.write("TOTAL: {0:.3f} kWh (avg. {1:.3f} kWh/day)\n".format(TotalPowerConsumption, TotalPowerConsumption / len(stats3)))
+            fout.write("\nTOTAL: {0:.3f}kWh (avg. {1:.3f}kWh/day)\n".format(TotalPowerConsumption, TotalPowerConsumption / len(stats3)))
             
             fout.write("\nFile generated on: {0}\n".format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
 
@@ -108,10 +112,10 @@ def WriteHistoricData(filename, data):
     """
     with open(filename, 'w', newline='') as fp:
         wr = csv.writer(fp, delimiter=';')
-        header = [['Timestamp', 'Voltage (V)', 'Current (A)', 'Power (kW)']]
+        header = [['Timestamp', 'Voltage (V)', 'Current (A)', 'Power (kW)', 'Apparent power (kVA)']]
         wr.writerows(header)  # Write header
         for d in data:            
-            str = [[d["Timestamp"], d["Voltage"], d["Current"], round(d["Power"], 3)]]
+            str = [[d["Timestamp"], d["Voltage"], d["Current"], round(d["Power"], 3), round(d["ApparentPower"], 3)]]
             wr.writerows(str)
 
 def GetDurationString(duration):
@@ -138,11 +142,25 @@ def GetDataStatistics(data):
     MinVoltageTimestamps = tuple(item['Timestamp'] for item in data if item["Voltage"] == MinVoltage)    
     # Compute maximum voltage and its occurence times
     MaxVoltage = max(item['Voltage'] for item in data)
-    MaxVoltageTimestamps = tuple(item['Timestamp'] for item in data if item["Voltage"] == MaxVoltage)    
+    MaxVoltageTimestamps = tuple(item['Timestamp'] for item in data if item["Voltage"] == MaxVoltage)
+    # Compute average voltage
+    AvgVoltage = sum(item['Voltage'] for item in data) / len(data)
     # Compute maximum power and its occurence times
     MaxPower = max(item['Power'] for item in data)
-    MaxPowerTimestamps = tuple(item['Timestamp'] for item in data if item["Power"] == MaxPower)    
-    return {"MinVoltage":MinVoltage, "MinVoltageTimestamps":MinVoltageTimestamps, "MaxVoltage":MaxVoltage, "MaxVoltageTimestamps":MaxVoltageTimestamps, "MaxPower":MaxPower, "MaxPowerTimestamps":MaxPowerTimestamps}
+    MaxPowerTimestamps = tuple(item['Timestamp'] for item in data if item["Power"] == MaxPower)
+    MaxApparentPower = max(item['ApparentPower'] for item in data)
+    MaxApparentPowerTimestamps = tuple(item['Timestamp'] for item in data if item["ApparentPower"] == MaxApparentPower)
+    return {
+        "AvgVoltage": AvgVoltage,
+        "MinVoltage":MinVoltage,
+        "MinVoltageTimestamps":MinVoltageTimestamps,
+        "MaxVoltage":MaxVoltage,
+        "MaxVoltageTimestamps":MaxVoltageTimestamps,
+        "MaxPower":MaxPower,
+        "MaxPowerTimestamps":MaxPowerTimestamps,
+        "MaxApparentPower":MaxApparentPower,
+        "MaxApparentPowerTimestamps":MaxApparentPowerTimestamps
+    }
 
 def GetBlackoutStatistics(data):
     Count = len(data)
@@ -154,6 +172,7 @@ def GetPowerStatistics(data):
     UniqueOrdinalDays = set(item['Timestamp'].toordinal() for item in data)
     for day in UniqueOrdinalDays:
         ConsumptionPerDay = sum(item['Power'] * 1 / 60 for item in data if item['Timestamp'].toordinal() == day)
+        TotalMinutes = len(tuple(item for item in data if item['Timestamp'].toordinal() == day))
+        TotalMinutesWithPowerConsumption = len(tuple(item for item in data if item['Timestamp'].toordinal() == day and item['Power'] > 0))
         Day = datetime.fromordinal(day)
-        yield { "Day" : Day, "Consumption" : ConsumptionPerDay }
-    
+        yield { "Day" : Day, "Consumption" : ConsumptionPerDay, "TotalMinutes": TotalMinutes, "TotalMinutesWithPowerConsumption": TotalMinutesWithPowerConsumption }
