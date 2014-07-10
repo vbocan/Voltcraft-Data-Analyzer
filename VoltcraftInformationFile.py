@@ -1,3 +1,4 @@
+#!python3
 """
 Project:      Voltcraft Data Analyzer
 Author:       Valer Bocan, PhD <valer@bocan.ro>

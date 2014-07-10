@@ -1,7 +1,8 @@
+#!python3
 """
 Project:      Voltcraft Data Analyzer
 Author:       Valer Bocan, PhD <valer@bocan.ro>
-Last updated: July 8th, 2014
+Last updated: July 10th, 2014
 
 Module
 description:  The VoltcraftDataFile module processes data files containing history of voltage, current and power factor,
@@ -22,7 +23,7 @@ def WriteInfoData(filename, info, powerdata, blackoutdata):
     """
     try:
         with open(filename, "wt") as fout:
-            fout.write("Voltcraft Data Analyzer v1.1 (July 8th, 2014)\n")
+            fout.write("Voltcraft Data Analyzer v1.2\n")
             fout.write("Valer Bocan, PhD <valer@bocan.ro>\n")
             fout.write("\n")
             fout.write("Initial time on device: {0}\n".format(info["InitialDateTime"]))
@@ -98,8 +99,14 @@ def WriteInfoData(filename, info, powerdata, blackoutdata):
                 fout.write("[{0}] - {1:.3f}kWh\n".format(c["Day"].strftime("%Y-%m-%d"), c["Consumption"]))
                 fout.write("      Recorded: {0}\n".format(GetDurationStringFromMinutes(c["TotalMinutes"])))
                 fout.write("      Power on: {0} ({1:.1f}%)\n".format(GetDurationStringFromMinutes(c["TotalMinutesWithPowerConsumption"]), c["TotalMinutesWithPowerConsumption"] / c["TotalMinutes"] * 100))
+
             TotalPowerConsumption = sum(item['Consumption'] for item in stats3)            
-            fout.write("\nTOTAL: {0:.3f}kWh (avg. {1:.3f}kWh/day)\n".format(TotalPowerConsumption, TotalPowerConsumption / len(stats3)))
+            fout.write("\nTOTAL CONSUMPTION                 : {0:.3f}kWh (avg. {1:.3f}kWh/day)\n".format(TotalPowerConsumption, TotalPowerConsumption / len(stats3)))
+
+            TotalRecordedTime = len(powerdata) # minutes
+            TotalTimeWithPowerConsumption = len(tuple(item for item in powerdata if item['Power'] > 0))
+            fout.write("Total recorded time               : {0}\n".format(GetDurationStringFromMinutes(TotalRecordedTime)))
+            fout.write("Total time with power consumption : {0} ({1:.1f}%)\n".format(GetDurationStringFromMinutes(TotalTimeWithPowerConsumption), TotalTimeWithPowerConsumption / TotalRecordedTime * 100 ))
             
             fout.write("\nFile generated on: {0}\n".format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
 
@@ -170,7 +177,7 @@ def GetBlackoutStatistics(data):
 def GetPowerStatistics(data):
     # Determine the unique days in the data log
     UniqueOrdinalDays = set(item['Timestamp'].toordinal() for item in data)
-    for day in UniqueOrdinalDays:
+    for day in sorted(UniqueOrdinalDays):
         ConsumptionPerDay = sum(item['Power'] * 1 / 60 for item in data if item['Timestamp'].toordinal() == day)
         TotalMinutes = len(tuple(item for item in data if item['Timestamp'].toordinal() == day))
         TotalMinutesWithPowerConsumption = len(tuple(item for item in data if item['Timestamp'].toordinal() == day and item['Power'] > 0))
