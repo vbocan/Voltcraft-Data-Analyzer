@@ -2,7 +2,7 @@
 """
 Project:      Voltcraft Data Analyzer
 Author:       Valer Bocan, PhD <valer@bocan.ro>
-Last updated: July 10th, 2014
+Last updated: September 13th, 2014
 
 Module
 description:  The VoltcraftDataFile module processes data files containing history of voltage, current and power factor,
@@ -126,16 +126,18 @@ def WriteHistoricData(filename, data):
             wr.writerows(str)
 
 def GetDurationString(duration):
+    print("Duration:{0}".format(duration))
     """
     Convert the duration timedelta in a day:hour:min:sec string representation
     """    
-    d = datetime(1,1,1) + duration
-    if d.day-1 >= 1:    
-        return "{0:02}d {1:02}h {2:02}m".format(d.day-1, d.hour, d.minute)
-    elif d.hour >= 1:
-        return "{0:02}h {1:02}m".format(d.hour, d.minute)
+    total_days, total_hours, total_minutes = duration.days, duration.seconds // 3600, duration.seconds // 60 % 60
+    
+    if total_days-1 >= 1:    
+        return "{0:02}d {1:02}h {2:02}m".format(total_days-1, total_hours, total_minutes)
+    elif total_hours >= 1:
+        return "{0:02}h {1:02}m".format(total_hours, total_minutes)
     else:
-        return "{0:02}m".format(d.minute)
+        return "{0:02}m".format(total_minutes)
 
 def GetDurationStringFromMinutes(duration):
     return GetDurationString(timedelta(minutes=duration))
