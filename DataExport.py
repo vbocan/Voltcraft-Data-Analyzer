@@ -126,7 +126,6 @@ def WriteHistoricData(filename, data):
             wr.writerows(str)
 
 def GetDurationString(duration):
-    print("Duration:{0}".format(duration))
     """
     Convert the duration timedelta in a day:hour:min:sec string representation
     """    
