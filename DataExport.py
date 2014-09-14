@@ -2,7 +2,7 @@
 """
 Project:      Voltcraft Data Analyzer
 Author:       Valer Bocan, PhD <valer@bocan.ro>
-Last updated: September 13th, 2014
+Last updated: September 14th, 2014
 
 Module
 description:  The VoltcraftDataFile module processes data files containing history of voltage, current and power factor,
@@ -125,14 +125,26 @@ def WriteHistoricData(filename, data):
             str = [[d["Timestamp"], d["Voltage"], d["Current"], round(d["Power"], 3), round(d["ApparentPower"], 3)]]
             wr.writerows(str)
 
+def WriteBlackoutData(filename, data):
+    """
+    Write blackout data to a CSV file
+    """
+    with open(filename, 'w', newline='') as fp:
+        wr = csv.writer(fp, delimiter=';')
+        header = [['Timestamp', 'Duration']]
+        wr.writerows(header)  # Write header
+        for d in data:            
+            str = [[d["Timestamp"], d["Duration"]]]
+            wr.writerows(str)
+
 def GetDurationString(duration):
     """
     Convert the duration timedelta in a day:hour:min:sec string representation
     """    
     total_days, total_hours, total_minutes = duration.days, duration.seconds // 3600, duration.seconds // 60 % 60
     
-    if total_days-1 >= 1:    
-        return "{0:02}d {1:02}h {2:02}m".format(total_days-1, total_hours, total_minutes)
+    if total_days >= 1:    
+        return "{0:02}d {1:02}h {2:02}m".format(total_days, total_hours, total_minutes)
     elif total_hours >= 1:
         return "{0:02}h {1:02}m".format(total_hours, total_minutes)
     else:

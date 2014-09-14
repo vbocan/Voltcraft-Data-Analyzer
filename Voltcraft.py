@@ -18,7 +18,7 @@ from os import listdir, getcwd
 from os.path import isfile, join, getsize
 from datetime import timedelta
 from datetime import datetime
-from DataExport import WriteInfoData, WriteHistoricData
+from DataExport import WriteInfoData, WriteHistoricData, WriteBlackoutData
 import VoltcraftInformationFile
 import VoltcraftDataFile
 
@@ -58,8 +58,11 @@ if __name__ == "__main__":
         BlackoutData = list(VoltcraftDataFile.DetectBlackouts(SortedPowerData))
         WriteInfoData("info.txt", PowerInfo, SortedPowerData, BlackoutData)
         #Save raw power history        
-        print("Saving raw power history ({0} items) to history.csv.".format(len(SortedPowerData)))
-        WriteHistoricData("history.csv", SortedPowerData)
+        print("Saving raw power history ({0} items) to power_history.csv.".format(len(SortedPowerData)))
+        WriteHistoricData("power_history.csv", SortedPowerData)
+        #Save raw blackout data
+        print("Saving raw blackout history ({0} items) to blackout_history.csv.".format(len(BlackoutData)))
+        WriteBlackoutData("blackout_history.csv", BlackoutData)
         print("Done.")
 
     #Wait for key press
