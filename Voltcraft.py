@@ -2,7 +2,7 @@
 """
 Project:      Voltcraft Data Analyzer
 Author:       Valer Bocan, PhD <valer@bocan.ro>
-Last updated: July 10th, 2014
+Last updated: April 11th, 2020 (while locked at home, during the COVID-19 crisis)
 
 Module
 description:  The VoltcraftDataFile module processes data files containing history of voltage, current and power factor,
@@ -26,15 +26,15 @@ PowerData = []
 ErrorOccured = False
 
 if __name__ == "__main__":    
-    print("Voltcraft Data Analyzer v1.2")
+    print("Voltcraft Data Analyzer v1.21")
     print("Valer Bocan, PhD <valer@bocan.ro>")
     TargetFolder = getcwd()
     if len(argv) > 1:
-        TargetFolder = argv[1:]
+        TargetFolder = argv[1]
     print("Processing Voltcraft files from folder {0}:".format(TargetFolder))
 
     # Get all files in the target folder
-    TargetFiles = [ f for f in listdir(TargetFolder) if f.upper().endswith("BIN")]
+    TargetFiles = [ join(TargetFolder, f) for f in listdir(TargetFolder) if f.upper().endswith("BIN")]
     
     for filename in TargetFiles:
         try:
